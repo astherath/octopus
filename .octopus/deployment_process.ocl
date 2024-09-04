@@ -30,7 +30,7 @@ step "deploy-a-package" {
 }
 
 step "run-a-script" {
-    name = "Run a Script"
+    name = "Reboot service and start package execution"
     properties = {
         Octopus.Action.TargetRoles = "ppe-worker"
     }
