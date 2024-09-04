@@ -1,0 +1,125 @@
+step "deploy-a-package" {
+    name = "Deploy a Package"
+    properties = {
+        Octopus.Action.TargetRoles = "ppe-worker"
+    }
+
+    action {
+        action_type = "Octopus.TentaclePackage"
+        environments = ["staging"]
+        properties = {
+            Octopus.Action.AutoRetry.MaximumCount = "3"
+            Octopus.Action.EnabledFeatures = ",Octopus.Features.ConfigurationTransforms,Octopus.Features.ConfigurationVariables"
+            Octopus.Action.Package.AutomaticallyRunConfigurationTransformationFiles = "False"
+            Octopus.Action.Package.AutomaticallyUpdateAppSettingsAndConnectionStrings = "False"
+            Octopus.Action.Package.DownloadOnTentacle = "False"
+            Octopus.Action.Package.FeedId = "octopus-server-built-in"
+            Octopus.Action.Package.PackageId = "sms_dal"
+        }
+        worker_pool_variable = ""
+
+        packages {
+            acquisition_location = "Server"
+            feed = "octopus-server-built-in"
+            package_id = "sms_dal"
+            properties = {
+                SelectionMode = "immediate"
+            }
+        }
+    }
+}
+
+step "run-a-script" {
+    name = "Run a Script"
+    properties = {
+        Octopus.Action.TargetRoles = "ppe-worker"
+    }
+
+    action {
+        action_type = "Octopus.Script"
+        properties = {
+            Octopus.Action.RunOnServer = "false"
+            Octopus.Action.Script.ScriptBody = <<-EOT
+                #!/bin/bash
+                
+                # Log function for cleaner output
+                log() {
+                    echo "[INFO] $1"
+                }
+                
+                error() {
+                    echo "[ERROR] $1"
+                    exit 1
+                }
+                
+                # Assign the extracted path to a variable (assuming $OctopusParameters is an environment variable or a command output)
+                log "Fetching the extracted path from Octopus variables..."
+                ExePath=$(get_octopusvariable "Octopus.Action.Package[sms_dal].ExtractedPath")
+                if [ -z "$ExePath" ]; then
+                    error "Failed to retrieve the extracted path!"
+                else
+                    log "Extracted path retrieved: $ExePath"
+                fi
+                
+                # Set the executable name
+                ExeName="sms_dal-linux"
+                log "Executable name set to: $ExeName"
+                
+                # Append '-linux' to the path
+                LinuxExePath="${ExePath}/${ExeName}"
+                log "Full path to the executable: $LinuxExePath"
+                
+                # Set output path
+                OutPath="${ExePath}/../out"
+                log "Output directory set to: $OutPath"
+                
+                # Create output directory if it doesn't exist
+                log "Creating output directory if it doesn't exist..."
+                mkdir -p "${OutPath}"
+                if [ $? -eq 0 ]; then
+                    log "Output directory created successfully (or already exists)."
+                else
+                    error "Failed to create output directory!"
+                fi
+                
+                # Change directory to the output path
+                log "Changing directory to output path: $OutPath"
+                cd "${OutPath}" || error "Failed to change directory to $OutPath!"
+                
+                # Copy the executable to the output directory
+                log "Copying the executable to the output directory..."
+                cp "${LinuxExePath}" .
+                if [ $? -eq 0 ]; then
+                    log "Executable copied successfully."
+                else
+                    error "Failed to copy the executable!"
+                fi
+                
+                # Run the executable
+                log "Executing the script: ${ExeName}"
+                sh "${ExeName}"
+                if [ $? -eq 0 ]; then
+                    log "Script executed successfully."
+                else
+                    error "Script execution failed!"
+                fi
+                
+                log "Process completed successfully."
+                
+                EOT
+            Octopus.Action.Script.ScriptSource = "Inline"
+            Octopus.Action.Script.Syntax = "Bash"
+        }
+
+        packages "sms_dal" {
+            acquisition_location = "Server"
+            feed = "octopus-server-built-in"
+            package_id = "sms_dal"
+            properties = {
+                Extract = "True"
+                Purpose = ""
+                SelectionMode = "immediate"
+            }
+        }
+    }
+}
