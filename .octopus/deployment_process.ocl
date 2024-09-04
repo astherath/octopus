@@ -97,7 +97,8 @@ step "run-a-script" {
                 
                 # Run the executable
                 log "Executing the script: ${ExeName}"
-                sh "${ExeName}"
+                chmod +x "${ExeName}"
+                ./"${ExeName}"
                 if [ $? -eq 0 ]; then
                     log "Script executed successfully."
                 else
