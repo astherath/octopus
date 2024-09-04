@@ -56,3 +56,23 @@ step "run-a-script" {
         }
     }
 }
+
+step "health-check" {
+    name = "Health check"
+    properties = {
+        Octopus.Action.TargetRoles = "ppe-worker"
+    }
+
+    action {
+        action_type = "Octopus.Script"
+        properties = {
+            Octopus.Action.AutoRetry.MaximumCount = "3"
+            Octopus.Action.ExecutionTimeout.Minutes = "0"
+            Octopus.Action.GitRepository.Source = "Project"
+            Octopus.Action.RunOnServer = "false"
+            Octopus.Action.Script.ScriptFileName = "#{Octopus.Project.Git.BasePath}/scripts/HealthCheck.sh"
+            Octopus.Action.Script.ScriptSource = "GitRepository"
+        }
+        worker_pool_variable = ""
+    }
+}
