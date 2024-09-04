@@ -71,6 +71,16 @@ else
     error "Failed to copy the executable!"
 fi
 
+# Set the executable permissions and chown
+log "Setting executable permissions and ownership..."
+chmod +x "${ExeName}"
+chown azureadmin:azureadmin "${ExeName}"
+if [ $? -eq 0 ]; then
+    log "Permissions and ownership set successfully."
+else
+    error "Failed to set permissions and ownership!"
+fi
+
 # Restart the service
 log "Restarting the service..."
 sudo systemctl start "${ServiceName}"
