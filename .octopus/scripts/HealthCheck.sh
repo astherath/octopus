@@ -19,6 +19,9 @@ SERVICE_STATUS=$(systemctl is-active sms_dal)
 
 if [ "$SERVICE_STATUS" != "active" ]; then
     error "sms_dal service is not running. Status: $SERVICE_STATUS"
+    #print out the status of the service and the tail 20 log
+    systemctl status sms_dal
+    journalctl -u sms_dal --no-pager --no-hostname --lines 20
 else
     log "sms_dal service is running. Status: $SERVICE_STATUS"
 fi
