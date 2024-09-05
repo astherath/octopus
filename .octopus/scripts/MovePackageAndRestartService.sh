@@ -50,7 +50,7 @@ else
 fi
 
 # clear output directory
-log "Clearing output directory..."
+log "Clearing output directory... at $OutPath"
 rm -rf "${OutPath:?}"/*
 if [ $? -eq 0 ]; then
     log "Output directory cleared successfully."
@@ -80,6 +80,10 @@ if [ $? -eq 0 ]; then
 else
     error "Failed to set permissions and ownership!"
 fi
+
+# log the current path and dir contents
+log "Current path: $(pwd)"
+log "Directory contents: $(ls -la)"
 
 # Restart the service
 log "Restarting the service..."
