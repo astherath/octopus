@@ -1,0 +1,20 @@
+worker_processes 2;
+events {
+    worker_connections 1024;
+}
+
+http {
+    server {
+        listen 80;
+        server_name ppe.pmaoctopus.com;
+
+        location /web/ {
+            proxy_pass http://localhost:8080;
+        }
+
+        location /octopus/ {
+            proxy_pass http://localhost:9090/;
+            #rewrite ^/octopus(/.*)?$ $1 break;
+        }
+    }
+}
